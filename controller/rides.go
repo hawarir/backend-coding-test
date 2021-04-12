@@ -18,12 +18,12 @@ type (
 
 func SetupRideController(e *echo.Echo, rideRepo domain.RideRepository) {
 	cntrl := &rideCntrl{rideRepo: rideRepo}
+
 	e.GET("/health", healthCheck)
 
 	e.POST("/rides", cntrl.addRide)
 	e.GET("/rides", cntrl.getAllRides)
 	e.GET("/rides/:id", cntrl.getRide)
-
 }
 
 func healthCheck(c echo.Context) error {
