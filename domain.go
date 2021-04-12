@@ -48,13 +48,13 @@ func (r Ride) Validate() error {
 			errs = append(errs, fmt.Sprintf("%f is not a valid longitude value", long))
 		}
 	}
-	for key, value := range map[string]string{
-		"riderName":     r.RiderName,
-		"driverName":    r.DriverName,
-		"driverVehicle": r.DriverVehicle,
+	for _, tuple := range [][2]string{
+		{"riderName", r.RiderName},
+		{"driverName", r.DriverName},
+		{"driverVehicle", r.DriverVehicle},
 	} {
-		if stringEmpty(value) {
-			errs = append(errs, fmt.Sprintf("%s can't be empty", key))
+		if stringEmpty(tuple[1]) {
+			errs = append(errs, fmt.Sprintf("%s can't be empty", tuple[0]))
 		}
 	}
 
