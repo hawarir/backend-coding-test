@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type (

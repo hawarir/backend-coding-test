@@ -16,7 +16,7 @@ import (
 
 type setupMockRepo func(mockRepo *mock.MockRideRepository)
 
-func NewRideController(t *testing.T, fn setupMockRepo) (rideCntrl, *gomock.Controller) {
+func newRideController(t *testing.T, fn setupMockRepo) (rideCntrl, *gomock.Controller) {
 	mockCtrl := gomock.NewController(t)
 
 	rideRepo := mock.NewMockRideRepository(mockCtrl)
@@ -97,7 +97,7 @@ func TestRideController_addRide(t *testing.T) {
 			e := echo.New()
 			c := e.NewContext(req, rec)
 
-			cntrl, mock := NewRideController(t, tc.setupMockRepo)
+			cntrl, mock := newRideController(t, tc.setupMockRepo)
 			defer mock.Finish()
 
 			err := cntrl.addRide(c)
@@ -171,7 +171,7 @@ func TestRideController_getAllRides(t *testing.T) {
 			e := echo.New()
 			c := e.NewContext(req, rec)
 
-			cntrl, mock := NewRideController(t, tc.setupMockRepo)
+			cntrl, mock := newRideController(t, tc.setupMockRepo)
 			defer mock.Finish()
 
 			err := cntrl.getAllRides(c)
@@ -259,7 +259,7 @@ func TestRideController_getRide(t *testing.T) {
 			c.SetParamNames("id")
 			c.SetParamValues(tc.paramID)
 
-			cntrl, mock := NewRideController(t, tc.setupMockRepo)
+			cntrl, mock := newRideController(t, tc.setupMockRepo)
 			defer mock.Finish()
 
 			err := cntrl.getRide(c)

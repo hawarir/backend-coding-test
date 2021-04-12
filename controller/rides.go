@@ -46,21 +46,21 @@ func (cntrl rideCntrl) addRide(c echo.Context) error {
 	return c.JSON(http.StatusCreated, ride)
 }
 
-func (h rideCntrl) getAllRides(c echo.Context) error {
-	rides, err := h.rideRepo.SelectAll()
+func (cntrl rideCntrl) getAllRides(c echo.Context) error {
+	rides, err := cntrl.rideRepo.SelectAll()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Internal server error: %s", err))
 	}
 	return c.JSON(http.StatusOK, rides)
 }
 
-func (h rideCntrl) getRide(c echo.Context) error {
+func (cntrl rideCntrl) getRide(c echo.Context) error {
 	id := c.Param("id")
 	rideID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Sprintf("Invalid ID: %s", err))
 	}
-	ride, err := h.rideRepo.SelectByID(rideID)
+	ride, err := cntrl.rideRepo.SelectByID(rideID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Internal server error: %s", err))
 	}

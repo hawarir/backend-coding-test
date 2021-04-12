@@ -8,6 +8,8 @@ import (
 	"github.com/hawarir/backend-coding-test/repository"
 
 	"github.com/labstack/echo/v4"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
