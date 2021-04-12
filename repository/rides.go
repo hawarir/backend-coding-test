@@ -48,7 +48,7 @@ func (r rideRepository) Insert(ride domain.Ride) (int64, error) {
 		placeholder[i] = "?"
 	}
 
-	stmt, err := r.db.Prepare("INSERT INTO rides (" + strings.Join(r.tableColumns[1:], ",") + ") VALUES (" + strings.Join(placeholder, ",") + ")")
+	stmt, err := r.db.Prepare("INSERT INTO rides (" + strings.Join(r.tableColumns[1:], ", ") + ") VALUES (" + strings.Join(placeholder, ",") + ")")
 	if err != nil {
 		return -1, err
 	}
@@ -71,7 +71,7 @@ func (r rideRepository) Insert(ride domain.Ride) (int64, error) {
 }
 
 func (r rideRepository) SelectAll() ([]domain.Ride, error) {
-	rows, err := r.db.Query("SELECT " + strings.Join(r.tableColumns, ",") + " FROM rides")
+	rows, err := r.db.Query("SELECT " + strings.Join(r.tableColumns, ", ") + " FROM rides")
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (r rideRepository) SelectAll() ([]domain.Ride, error) {
 
 func (r rideRepository) SelectByID(id int64) (*domain.Ride, error) {
 	var ride domain.Ride
-	err := r.db.QueryRow("SELECT "+strings.Join(r.tableColumns, ",")+" FROM rides WHERE id = ?", id).Scan(
+	err := r.db.QueryRow("SELECT "+strings.Join(r.tableColumns, ", ")+" FROM rides WHERE id = ?", id).Scan(
 		&ride.ID,
 		&ride.StartLatitude,
 		&ride.StartLongitude,
