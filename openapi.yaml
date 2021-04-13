@@ -7,6 +7,10 @@ tags:
   - name: rides
   - name: app
 
+servers:
+  - url: https://backend-coding-test.herokuapp.com
+    description: Sandbox server
+
 paths:
   /health:
     get:

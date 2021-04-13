@@ -13,4 +13,4 @@ The purpose of this service is to log all ride records and retrieve it. A ride i
 
 # API Documentation
 
-TODO: Host Swagger UI alongside the service
+Please refer to [this page](https://hawarir.github.io/backend-coding-test) for API documentation.
