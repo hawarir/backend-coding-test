@@ -14,6 +14,11 @@ type (
 	rideCntrl struct {
 		rideRepo domain.RideRepository
 	}
+
+	ridesEnvelope struct {
+		Rides  []domain.Ride `json:"rides"`
+		Cursor string        `json:"cursor"`
+	}
 )
 
 func SetupRideController(e *echo.Echo, rideRepo domain.RideRepository) {
@@ -47,11 +52,15 @@ func (cntrl rideCntrl) addRide(c echo.Context) error {
 }
 
 func (cntrl rideCntrl) getAllRides(c echo.Context) error {
-	rides, err := cntrl.rideRepo.SelectAll()
+	var page domain.Pagination
+	if err := c.Bind(&page); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Bad request: %s", err))
+	}
+	rides, cursor, err := cntrl.rideRepo.SelectAll(page)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Internal server error: %s", err))
 	}
-	return c.JSON(http.StatusOK, rides)
+	return c.JSON(http.StatusOK, ridesEnvelope{Rides: rides, Cursor: cursor})
 }
 
 func (cntrl rideCntrl) getRide(c echo.Context) error {

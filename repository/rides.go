@@ -3,9 +3,12 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	domain "github.com/hawarir/backend-coding-test"
+
+	sq "github.com/Masterminds/squirrel"
 )
 
 type rideRepository struct {
@@ -70,10 +73,27 @@ func (r rideRepository) Insert(ride domain.Ride) (int64, error) {
 	return result.LastInsertId()
 }
 
-func (r rideRepository) SelectAll() ([]domain.Ride, error) {
-	rows, err := r.db.Query("SELECT " + strings.Join(r.tableColumns, ", ") + " FROM rides")
+func (r rideRepository) SelectAll(page domain.Pagination) ([]domain.Ride, string, error) {
+	builder := sq.Select(r.tableColumns...).From("rides").OrderBy("id desc").RunWith(r.db)
+
+	if page.Cursor != "" {
+		cursor, err := strconv.ParseInt(page.Cursor, 10, 64)
+		if err != nil {
+			return nil, "", err
+		}
+		builder = builder.Where(sq.LtOrEq{"id": cursor})
+	}
+
+	if page.Limit > 0 {
+		// NOTE: This is so that we can get the next cursor from the last element,
+		// make sure to not return it.
+		limit := page.Limit + 1
+		builder = builder.Limit(limit)
+	}
+
+	rows, err := builder.Query()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer rows.Close()
 
@@ -90,12 +110,19 @@ func (r rideRepository) SelectAll() ([]domain.Ride, error) {
 			&ride.DriverName,
 			&ride.DriverVehicle,
 		); err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		rides = append(rides, ride)
 	}
 
-	return rides, nil
+	if page.Limit == 0 || uint64(len(rides)) <= page.Limit {
+		return rides, "", nil
+	}
+
+	lastIndex := page.Limit
+	nextCursor := strconv.FormatInt(rides[lastIndex].ID, 10)
+
+	return rides[:lastIndex], nextCursor, nil
 }
 
 func (r rideRepository) SelectByID(id int64) (*domain.Ride, error) {

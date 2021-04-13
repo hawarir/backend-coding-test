@@ -119,15 +119,22 @@ func TestRideController_getAllRides(t *testing.T) {
 	testCases := []struct {
 		testName      string
 		setupMockRepo setupMockRepo
+		queryParams   string
 		statusCode    int
 		responseBody  string
 		expectedErr   string
 	}{
 		{
+			testName:    "When failed to bind query params, return status code 400 with error message",
+			queryParams: "?limit=not-number",
+			statusCode:  http.StatusBadRequest,
+			expectedErr: "code=400, message=Bad request: code=400, message=strconv.ParseUint: parsing \"not-number\": invalid syntax, internal=strconv.ParseUint: parsing \"not-number\": invalid syntax",
+		},
+		{
 			testName: "When repository returns error, return status code 500 with error message",
 			setupMockRepo: func(mockRepo *mock.MockRideRepository) {
-				mockRepo.EXPECT().SelectAll().
-					Return(nil, errors.New("Select All error"))
+				mockRepo.EXPECT().SelectAll(domain.Pagination{}).
+					Return(nil, "", errors.New("Select All error"))
 			},
 			statusCode:  http.StatusInternalServerError,
 			expectedErr: "code=500, message=Internal server error: Select All error",
@@ -135,16 +142,16 @@ func TestRideController_getAllRides(t *testing.T) {
 		{
 			testName: "When repository returns empty result, return status code 200 with empty array in response body",
 			setupMockRepo: func(mockRepo *mock.MockRideRepository) {
-				mockRepo.EXPECT().SelectAll().
-					Return([]domain.Ride{}, nil)
+				mockRepo.EXPECT().SelectAll(domain.Pagination{}).
+					Return([]domain.Ride{}, "", nil)
 			},
 			statusCode:   http.StatusOK,
-			responseBody: "[]\n",
+			responseBody: "{\"rides\":[],\"cursor\":\"\"}\n",
 		},
 		{
 			testName: "When repository returns results, return status code 200 with the results as array",
 			setupMockRepo: func(mockRepo *mock.MockRideRepository) {
-				mockRepo.EXPECT().SelectAll().
+				mockRepo.EXPECT().SelectAll(domain.Pagination{}).
 					Return([]domain.Ride{
 						{
 							ID:             1,
@@ -156,16 +163,42 @@ func TestRideController_getAllRides(t *testing.T) {
 							DriverName:     "Driver",
 							DriverVehicle:  "Car",
 						},
-					}, nil)
+					}, "", nil)
 			},
 			statusCode:   http.StatusOK,
-			responseBody: "[{\"id\":1,\"startLatitude\":90,\"startLongitude\":180,\"endLatitude\":90,\"endLongitude\":180,\"riderName\":\"John Doe\",\"driverName\":\"Driver\",\"driverVehicle\":\"Car\"}]\n",
+			responseBody: "{\"rides\":[{\"id\":1,\"startLatitude\":90,\"startLongitude\":180,\"endLatitude\":90,\"endLongitude\":180,\"riderName\":\"John Doe\",\"driverName\":\"Driver\",\"driverVehicle\":\"Car\"}],\"cursor\":\"\"}\n",
+		},
+		{
+			testName: "When provided query params, use it as arguments",
+			setupMockRepo: func(mockRepo *mock.MockRideRepository) {
+				mockRepo.EXPECT().SelectAll(domain.Pagination{Cursor: "3", Limit: 1}).
+					Return([]domain.Ride{
+						{
+							ID:             3,
+							StartLatitude:  90,
+							StartLongitude: 180,
+							EndLatitude:    90,
+							EndLongitude:   180,
+							RiderName:      "John Doe",
+							DriverName:     "Driver",
+							DriverVehicle:  "Car",
+						},
+					}, "2", nil)
+			},
+			queryParams:  "?cursor=3&limit=1",
+			statusCode:   http.StatusOK,
+			responseBody: "{\"rides\":[{\"id\":3,\"startLatitude\":90,\"startLongitude\":180,\"endLatitude\":90,\"endLongitude\":180,\"riderName\":\"John Doe\",\"driverName\":\"Driver\",\"driverVehicle\":\"Car\"}],\"cursor\":\"2\"}\n",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/rides", nil)
+			path := "/rides"
+			if tc.queryParams != "" {
+				path += tc.queryParams
+			}
+
+			req := httptest.NewRequest(http.MethodGet, path, nil)
 			rec := httptest.NewRecorder()
 
 			e := echo.New()

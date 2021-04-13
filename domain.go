@@ -18,11 +18,16 @@ type (
 		DriverVehicle  string  `json:"driverVehicle"`
 	}
 
+	Pagination struct {
+		Cursor string `query:"cursor"`
+		Limit  uint64 `query:"limit"`
+	}
+
 	RideRepository interface {
 		InitTable() error
 
 		Insert(Ride) (int64, error)
-		SelectAll() ([]Ride, error)
+		SelectAll(Pagination) ([]Ride, string, error)
 		SelectByID(int64) (*Ride, error)
 	}
 )
