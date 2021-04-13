@@ -31,4 +31,4 @@ loadtest:
 
 .PHONY: run
 run:
-	@go run main/main.go
+	@DB_PATH=./rides.db PORT=8010 go run main/main.go
