@@ -117,13 +117,20 @@ func TestRideRepository_SelectAll(t *testing.T) {
 	testCases := []struct {
 		testName     string
 		setupSQLMock setupSQLMock
+		page         domain.Pagination
 		rides        []domain.Ride
+		cursor       string
 		expectedErr  string
 	}{
 		{
+			testName:    "When failed to parse cursor, return error",
+			page:        domain.Pagination{Cursor: "not-a-number"},
+			expectedErr: "strconv.ParseInt: parsing \"not-a-number\": invalid syntax",
+		},
+		{
 			testName: "When query returns error, return the error",
 			setupSQLMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides").
+				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides ORDER BY id desc").
 					WillReturnError(errors.New("Query error"))
 			},
 			expectedErr: "Query error",
@@ -131,7 +138,7 @@ func TestRideRepository_SelectAll(t *testing.T) {
 		{
 			testName: "When scan failed, return error",
 			setupSQLMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides").
+				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides ORDER BY id desc").
 					WillReturnRows(sqlmock.
 						NewRows([]string{
 							"id",
@@ -159,7 +166,7 @@ func TestRideRepository_SelectAll(t *testing.T) {
 		{
 			testName: "When return no rows, return empty slice",
 			setupSQLMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides").
+				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides ORDER BY id desc").
 					WillReturnRows(sqlmock.
 						NewRows([]string{
 							"id",
@@ -177,7 +184,7 @@ func TestRideRepository_SelectAll(t *testing.T) {
 		{
 			testName: "When successful, return rides",
 			setupSQLMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides").
+				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides ORDER BY id desc").
 					WillReturnRows(sqlmock.
 						NewRows([]string{
 							"id",
@@ -213,6 +220,140 @@ func TestRideRepository_SelectAll(t *testing.T) {
 				},
 			},
 		},
+		{
+			testName: "When provided pagination, use it as part of the query",
+			setupSQLMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides WHERE id <= ? ORDER BY id desc LIMIT 3").
+					WithArgs(int64(3)).
+					WillReturnRows(sqlmock.
+						NewRows([]string{
+							"id",
+							"startLat",
+							"startLong",
+							"endLat",
+							"endLong",
+							"riderName",
+							"driverName",
+							"driverVehicle",
+						}).
+						AddRow(
+							3,
+							-90,
+							-180,
+							90,
+							180,
+							"John Doe",
+							"Driver",
+							"Car",
+						).
+						AddRow(
+							2,
+							-90,
+							-180,
+							90,
+							180,
+							"John Doe",
+							"Driver",
+							"Car",
+						).
+						AddRow(
+							1,
+							-90,
+							-180,
+							90,
+							180,
+							"John Doe",
+							"Driver",
+							"Car",
+						))
+			},
+			page: domain.Pagination{Cursor: "3", Limit: 2},
+			rides: []domain.Ride{
+				{
+					ID:             3,
+					StartLatitude:  -90,
+					StartLongitude: -180,
+					EndLatitude:    90,
+					EndLongitude:   180,
+					RiderName:      "John Doe",
+					DriverName:     "Driver",
+					DriverVehicle:  "Car",
+				},
+				{
+					ID:             2,
+					StartLatitude:  -90,
+					StartLongitude: -180,
+					EndLatitude:    90,
+					EndLongitude:   180,
+					RiderName:      "John Doe",
+					DriverName:     "Driver",
+					DriverVehicle:  "Car",
+				},
+			},
+			cursor: "1",
+		},
+		{
+			testName: "When result count is less than or equal page limit, return all of it without cursor",
+			setupSQLMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides WHERE id <= ? ORDER BY id desc LIMIT 3").
+					WithArgs(int64(3)).
+					WillReturnRows(sqlmock.
+						NewRows([]string{
+							"id",
+							"startLat",
+							"startLong",
+							"endLat",
+							"endLong",
+							"riderName",
+							"driverName",
+							"driverVehicle",
+						}).
+						AddRow(
+							3,
+							-90,
+							-180,
+							90,
+							180,
+							"John Doe",
+							"Driver",
+							"Car",
+						).
+						AddRow(
+							2,
+							-90,
+							-180,
+							90,
+							180,
+							"John Doe",
+							"Driver",
+							"Car",
+						))
+			},
+			page: domain.Pagination{Cursor: "3", Limit: 2},
+			rides: []domain.Ride{
+				{
+					ID:             3,
+					StartLatitude:  -90,
+					StartLongitude: -180,
+					EndLatitude:    90,
+					EndLongitude:   180,
+					RiderName:      "John Doe",
+					DriverName:     "Driver",
+					DriverVehicle:  "Car",
+				},
+				{
+					ID:             2,
+					StartLatitude:  -90,
+					StartLongitude: -180,
+					EndLatitude:    90,
+					EndLongitude:   180,
+					RiderName:      "John Doe",
+					DriverName:     "Driver",
+					DriverVehicle:  "Car",
+				},
+			},
+			cursor: "",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -220,12 +361,13 @@ func TestRideRepository_SelectAll(t *testing.T) {
 			rideRepo, db := createRideRepo(tc.setupSQLMock)
 			defer db.Close()
 
-			rides, err := rideRepo.SelectAll()
+			rides, cursor, err := rideRepo.SelectAll(tc.page)
 			if tc.expectedErr != "" {
 				assert.EqualError(t, err, tc.expectedErr)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.rides, rides)
+				assert.Equal(t, tc.cursor, cursor)
 			}
 		})
 	}

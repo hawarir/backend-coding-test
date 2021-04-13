@@ -60,15 +60,36 @@ paths:
         - rides
       summary: Get all ride records
       operationId: getAllRides
+      parameters:
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: A pointer to a record by its ID, returns records before the pointer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Determines how many records to return
       responses:
         '200':
           description: Successfully retrieved all ride records
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ride'
+                properties:
+                  rides:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ride'
+                  cursor:
+                    type: string
+        '400':
+          description: Unable to retrieve any rides because of error when parsing request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Unable to retrieve any rides because of server error
           content:
