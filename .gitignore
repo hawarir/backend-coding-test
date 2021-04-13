@@ -1,9 +1,0 @@
-# Logs
-logs
-*.log
-
-# SQLite database
-rides.db
-
-# Code coverage file
-coverage.out
