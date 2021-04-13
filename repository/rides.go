@@ -46,26 +46,19 @@ func (r rideRepository) InitTable() error {
 }
 
 func (r rideRepository) Insert(ride domain.Ride) (int64, error) {
-	var placeholder = make([]string, len(r.tableColumns)-1)
-	for i := range placeholder {
-		placeholder[i] = "?"
-	}
-
-	stmt, err := r.db.Prepare("INSERT INTO rides (" + strings.Join(r.tableColumns[1:], ", ") + ") VALUES (" + strings.Join(placeholder, ",") + ")")
-	if err != nil {
-		return -1, err
-	}
-	defer stmt.Close()
-
-	result, err := stmt.Exec(
-		ride.StartLatitude,
-		ride.StartLongitude,
-		ride.EndLatitude,
-		ride.EndLongitude,
-		ride.RiderName,
-		ride.DriverName,
-		ride.DriverVehicle,
-	)
+	result, err := sq.Insert("rides").
+		Columns(r.tableColumns[1:]...).
+		Values(
+			ride.StartLatitude,
+			ride.StartLongitude,
+			ride.EndLatitude,
+			ride.EndLongitude,
+			ride.RiderName,
+			ride.DriverName,
+			ride.DriverVehicle,
+		).
+		RunWith(r.db).
+		Exec()
 
 	if err != nil {
 		return -1, err
@@ -127,7 +120,7 @@ func (r rideRepository) SelectAll(page domain.Pagination) ([]domain.Ride, string
 
 func (r rideRepository) SelectByID(id int64) (*domain.Ride, error) {
 	var ride domain.Ride
-	err := r.db.QueryRow("SELECT "+strings.Join(r.tableColumns, ", ")+" FROM rides WHERE id = ?", id).Scan(
+	err := sq.Select(r.tableColumns...).From("rides").Where(sq.Eq{"id": id}).RunWith(r.db).QueryRow().Scan(
 		&ride.ID,
 		&ride.StartLatitude,
 		&ride.StartLongitude,

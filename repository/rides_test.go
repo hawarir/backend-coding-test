@@ -31,21 +31,9 @@ func TestRideRepository_Insert(t *testing.T) {
 		expectedErr  string
 	}{
 		{
-			testName: "When prepare returns error, return the error",
-			setupSQLMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectPrepare("INSERT INTO rides (startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?,?,?,?,?,?,?)").
-					WillReturnError(errors.New("Prepare error"))
-			},
-			ride:        domain.Ride{},
-			expectedErr: "Prepare error",
-		},
-		{
 			testName: "When exec returns error, return the error",
 			setupSQLMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectPrepare("INSERT INTO rides (startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?,?,?,?,?,?,?)").
-					WillReturnError(nil)
-
-				mock.ExpectExec("INSERT INTO rides (startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?,?,?,?,?,?,?)").
+				mock.ExpectExec("INSERT INTO rides (startLat,startLong,endLat,endLong,riderName,driverName,driverVehicle) VALUES (?,?,?,?,?,?,?)").
 					WithArgs(
 						float64(-90),
 						float64(-180),
@@ -70,10 +58,7 @@ func TestRideRepository_Insert(t *testing.T) {
 		{
 			testName: "When successful, return the result",
 			setupSQLMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectPrepare("INSERT INTO rides (startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?,?,?,?,?,?,?)").
-					WillReturnError(nil)
-
-				mock.ExpectExec("INSERT INTO rides (startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?,?,?,?,?,?,?)").
+				mock.ExpectExec("INSERT INTO rides (startLat,startLong,endLat,endLong,riderName,driverName,driverVehicle) VALUES (?,?,?,?,?,?,?)").
 					WithArgs(
 						float64(-90),
 						float64(-180),
