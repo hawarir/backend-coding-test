@@ -123,6 +123,11 @@ func TestRideRepository_SelectAll(t *testing.T) {
 		expectedErr  string
 	}{
 		{
+			testName:    "When failed to parse cursor, return error",
+			page:        domain.Pagination{Cursor: "not-a-number"},
+			expectedErr: "strconv.ParseInt: parsing \"not-a-number\": invalid syntax",
+		},
+		{
 			testName: "When query returns error, return the error",
 			setupSQLMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("SELECT id, startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle FROM rides ORDER BY id desc").
